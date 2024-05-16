@@ -8,27 +8,39 @@
 
 import UIKit.UIGestureRecognizer
 
-extension UILongPressGestureRecognizer: Expectable {
-    
-    public typealias With = UIView
+extension UIGestureRecognizer: Pipable {
 
-    public static func start<P, E>(expectating expectation: Expect<E>, with piped: P, on pipe: Pipe) where E : Expectable {
-
-        _ = pipe.start(expecting: expectation)
-
-        let delegate = pipe.get(or: Delegate())
-
-        let recognizer: Self = pipe.get() ?? Self()
-        recognizer.addTarget(delegate, action: #selector(Delegate.handleLongPress(sender:)))
- 
-        //        if recognizer.isPiped() {
-
-        let view = piped as! UIView
-        view.addGestureRecognizer(recognizer)
-
-    }
+}
 
 
+@discardableResult
+public
+func |<T: UIGestureRecognizer> (view: UIView, handler: @escaping (T)->()) -> T {
+    view | .every(handler: handler)
+}
+
+@discardableResult
+public
+func |<T: UIGestureRecognizer> (view: UIView, ask: Ask<T>) -> T {
+
+    typealias Delegate = UIGestureRecognizer.Delegate
+
+    let pipe = Pipe()
+
+
+    let recognizer = T()
+
+    ask.key = recognizer.address|
+    _ = pipe.ask(for: ask)
+
+
+    let delegate = pipe.put(Delegate())
+    recognizer.addTarget(delegate,
+                         action: #selector(Delegate.handle(sender:)))
+
+    view.addGestureRecognizer(recognizer)
+
+    return pipe.put(recognizer)
 }
 
 extension UIGestureRecognizer {
@@ -36,8 +48,8 @@ extension UIGestureRecognizer {
     class Delegate: NSObject, Pipable {
 
         @objc
-        func handleLongPress(sender: UILongPressGestureRecognizer) {
-            isPiped?.put(sender)
+        func handle(sender: UIGestureRecognizer) {
+            isPiped?.put(sender, key: sender.address|)
         }
 
     }

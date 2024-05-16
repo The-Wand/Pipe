@@ -26,18 +26,20 @@ import CoreNFC
 
 extension NFCNDEFReaderSession: Constructable {
 
-    public static func construct<P>(with piped: P, on pipe: Pipe) -> Self {
+    public static func construct(in pipe: Pipe) -> Self {
 
-        let delegate = pipe.put(NFCNDEFReaderSession.Delegate())
+        let delegate = pipe.put(Delegate())
+
         let source = Self(delegate: delegate,
                           queue: DispatchQueue.global(),
                           invalidateAfterFirstRead: false) //while
 
-        let message = piped as? String ?? "Hold to know what it is 🧙🏾‍♂️"
+        let message: String = pipe.get() ?? "Hold to know what it is 🧙🏾‍♂️"
         source.alertMessage = message
+
         pipe.put(source)
 
-        return source
+        return pipe.put(source)
     }
 
 }
@@ -46,28 +48,38 @@ extension NFCNDEFReaderSession {
     class Delegate: NSObject, NFCNDEFReaderSessionDelegate, Pipable {
 
         func readerSessionDidBecomeActive(_ session: NFCNDEFReaderSession) {
-            isPiped?.put(true, key: "NFCNDEFReaderSessionIsReady")
+            isPiped?.put(true as Bool, key: "NFCNDEFReaderSessionIsReady")
         }
 
         func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
-            isPiped?.put(false, key: "NFCNDEFReaderSessionIsReady")
+            isPiped?.put(false as Bool, key: "NFCNDEFReaderSessionIsReady")
             isPiped?.put(error)
         }
 
         func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
         }
 
-
         @available(iOS 13.0, *)
         func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
 
             if let first = tags.first {
-                isPiped?.put(first)
+//                isPiped?.put(first)
+                
+                if let pipe = isPiped {
+
+
+
+                    let address = MemoryAddress.address(of: first)
+                    print("💪🏽 set \(address)")
+                    Pipe.all[address] = pipe
+
+                    pipe.put(first)
+                }
             }
 
-            if tags.count > 1 {
-                isPiped?.put(tags)
-            }
+//            if tags.count > 1 {
+//                isPiped?.put(tags)
+//            }
         }
 
     }

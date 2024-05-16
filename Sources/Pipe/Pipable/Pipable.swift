@@ -26,7 +26,7 @@ public protocol Pipable {
     var pipe: Pipe {get}
     var isPiped: Pipe? {get}
 
-    var address: String {get}
+    var address: Int {get}
 
 }
 
@@ -44,25 +44,107 @@ public extension Pipable {
 
 public extension Pipable where Self: AnyObject {
 
-    var address: String {
-        let address = "\(Unmanaged.passUnretained(self).toOpaque())"
-//        print("🥳 ad \(address) for class \(self)")
-        return address
+    var address: Int {
+        Int(bitPattern: Unmanaged.passUnretained(self).toOpaque())
     }
 
 }
 
 public extension Pipable {
 
-    var address: String {
-        var address: String?
+    var address: Int {
+        var address: Int!
         var mutable = self
         withUnsafePointer(to: &mutable) { pointer in
-            address = String(format: "%p", pointer)
+            address = Int(bitPattern: pointer)
         }
 
-//        print("🥳 ad \(address!) for \(self)")
         return address!
     }
 
 }
+
+//NO FUCKING WAY, it breaks Pipe.attach(to: array)
+//extension Array: Pipable {
+//
+//}
+
+
+struct MemoryAddress<T> {
+
+//    let intValue: Int
+//
+//    var description: String {
+//        let length = 2 + 2 * MemoryLayout<UnsafeRawPointer>.size
+//        return String(format: "%0\(length)p", intValue)
+//    }
+//
+//    // for structures
+//    init(of structPointer: UnsafePointer<T>) {
+//        intValue = Int(bitPattern: structPointer)
+//    }
+
+    static func address(of model: T) -> Int {
+        var address: Int!
+        var mutable = model
+        withUnsafePointer(to: &mutable) { pointer in
+            address = Int(bitPattern: pointer)
+        }
+
+        return address
+    }
+}
+
+extension MemoryAddress where T: AnyObject {
+
+//    // for classes
+//    init(of classInstance: T) {
+//        intValue = unsafeBitCast(classInstance, to: Int.self)
+//        // or      Int(bitPattern: Unmanaged<T>.passUnretained(classInstance).toOpaque())
+//    }
+
+
+    static func address(of model: T) -> Int {
+        unsafeBitCast(model, to: Int.self)
+    }
+
+
+}
+
+//extension Optional {
+//
+//    var address: String? {
+//
+//        switch self {
+//            case .none:
+//                return nil
+//
+//            case .some(let some):
+//                var address: String?
+//                var mutable = some
+//                withUnsafePointer(to: &mutable) { pointer in
+//                    address = String(format: "%p", pointer)
+//                }
+//
+//                return address
+//        }
+//
+//    }
+//
+//}
+//
+//extension Optional where Wrapped: AnyObject {
+//
+//    var address: String? {
+//
+//        switch self {
+//            case .none:
+//                return nil
+//
+//            case .some(let object):
+//                return "\(Unmanaged.passUnretained(object).toOpaque())"
+//        }
+//
+//    }
+//
+//}

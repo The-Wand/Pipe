@@ -52,10 +52,11 @@ class CoreLocation_Tests: XCTestCase {
             kCLLocationAccuracyKilometer,
             kCLLocationAccuracyThreeKilometers
         ])
+        let distance = ((100...420)| as Int)| as Double
 
         let pipe: Pipeline = ["CLLocationAccuracy": accuracy,
-                              "CLLocationDistance": Double.any]
-        let piped = pipe.piped
+                              "CLLocationDistance": distance]
+        let piped = pipe.scope
 
         pipe | { (location: CLLocation) in
             e.fulfill()

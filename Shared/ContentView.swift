@@ -5,12 +5,11 @@
 //  Created by Alex Kozin on 29.08.2022.
 //
 
+import CoreBluetooth
+import CoreLocation
 
-import ARKit
-import RealityKit
-
-import Pipe
 import SwiftUI
+import Pipe
 
 struct ContentView: View {
 
@@ -18,18 +17,26 @@ struct ContentView: View {
         Text("Hello, Pipe |").onAppear {
 
 
-//            if #available(iOS 14.3, *) {
-//
-//                let pipe = |.add { (a: [ARAnchor]) in
-//                    print("")
+
+//            |
+//                .retrieve { (peripherals: [CBPeripheral]) in
+//                    print()
 //                }
-//
-//                let view: ARView = pipe.get()
-//
-//
-//            }
+
+            let uids: [CBUUID] = [.flipperZerof6,
+                                  .flipperZeroWhite,
+                                  .flipperZeroBlack]
+
+            let pipe = Pipeline()
+            pipe.store(uids)
+
+            pipe | { (peripheral: CBPeripheral) in
+                print(peripheral.name)
+            }
+
 
         }
+
     }
 
     func codes() {

@@ -27,16 +27,17 @@ import CloudKit
 /**
  Add error handler
  - Parameters:
- - handler: Will be invoked only after error
+ - handler: Will be invoked after every error
  */
 @discardableResult
 public func | (piped: Pipable, handler: @escaping (Error)->() ) -> Pipe {
-    let pipe = piped.pipe
-    _ = pipe.start(expecting: Expect.every(handler))
+    piped | .every(handler: handler)
+}
 
-//    pipe.expectations["Error"] = [
-//        Expect.every(handler)
-//    ]
+@discardableResult
+public func | (piped: Pipable, ask: Ask<Error>) -> Pipe {
+    let pipe = piped.pipe
+    _ = pipe.ask(for: ask.inner())
 
     return pipe
 }
@@ -46,48 +47,34 @@ public func | (piped: Pipable, handler: @escaping (Error)->() ) -> Pipe {
  - Parameters:
  - handler: Will be invoked after success and error
  */
-@discardableResult
-public func | (piped: Pipable, handler: @escaping (Error?)->() ) -> Pipe {
-    //TODO: Rewrite "Error" expectations
-    let pipe = piped.pipe
-
-    _ = pipe.start(expecting: Expect.every(handler))
-
-    //    pipe.expectations["Error"] = [
-    //        Expect.every(handler)
-    //    ]
-
-    return pipe
-
-//    pipe.expectations["Result<Int, Error>"] = [
-//        Expect.every { (result: Result<Int,Error>) in
-//            switch result {
-//                case .success(_):
-//                    handler(nil)
-//                case .failure(let failure):
-//                    handler(failure)
-//            }
-//        }
-//    ]
-//    pipe.expectations["Error"] = [
-//        Expect.every(handler)
-//    ]
+//@discardableResult
+//public func | (piped: Pipable, handler: @escaping (Error?)->() ) -> Pipe {
+//    //TODO: Rewrite "Error" expectations
+//    let pipe = piped.pipe
+//
+//    _ = pipe.expect(.every(handler).inner())
+//
+//    //    pipe.expectations["Error"] = [
+//    //        Expect.every(handler)
+//    //    ]
 //
 //    return pipe
-}
+//}
 
 extension Pipe {
 
     struct Error: Swift.Error {
 
+        let code: Int
         let reason: String
 
-        init(_ reason: String, function: String = #function) {
+        init(code: Int = .zero, reason: String, function: String = #function) {
+            self.code = code
             self.reason = function + reason
         }
 
         static func vision(_ reason: String) -> Error {
-            Self(reason)
+            Self(reason: reason)
         }
 
     }

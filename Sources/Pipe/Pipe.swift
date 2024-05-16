@@ -21,6 +21,8 @@
 //  Created by Alex Kozin
 //
 
+import Foundation
+
 /// Pipe
 ///
 ///
@@ -30,85 +32,49 @@
 /// func put<T>(object: T) -> T
 /// func put<T>(object: T, key: String) -> T
 ///
-/// func start<E: Expectable>(expecting: Expect<E>) -> isFirst
 /// func start<E: Expectable>(expecting: Expect<E>, key: String) -> isFirst
 ///
 ///
 ///
 public final class Pipe {
 
-    internal static var all = [String?: Pipe]()
+    internal static var all = [Int: Pipe]()
 
-    internal static subscript(piped: Any) -> Pipe? {
+    internal static subscript<T>(piped: T) -> Pipe? {
         get {
-            if let key = key(piped) {
+
+            if T.self is AnyClass {
+                let key = unsafeBitCast(piped, to: Int.self)
                 return all[key]
             }
 
             return nil
+
         }
         set {
-            if let pipe = newValue, let key = key(piped) {
+
+            if let pipe = newValue, T.self is AnyClass {
+                let key = unsafeBitCast(piped, to: Int.self)
                 all[key] = pipe
             }
+
         }
     }
 
-    internal static func key(_ piped: Any) -> String? {
-        (piped as? Pipable)?.address
-    }
-    
-    public private(set) lazy var piped: [String: Any] = ["Pipe": self]
-    lazy var expectations = [String: [Expecting]]()
+    //Objects that inside pipe
+    public private(set)
+    lazy var scope: [String: Any] = [:]
 
-    public func close() {
-        close(last: self)
-    }
+    //Expectaions for objects that not yet in scope
+    lazy var asking = [String: [AskFor]]()
 
-    func closeIfNeed(last: Any? = nil) {
-        //TODO: CONCURENCYYYY!!!!
-
-        //Try to close only if something expected before
-        guard !expectations.isEmpty else {
-            return
-        }
-
-        //Close Pipe if only inner expectations is live
-        var expectingSomething = false
-        root: for (_, list) in expectations {
-            for expectation in list {
-                if expectation.isInner == false {
-                    expectingSomething = true
-
-                    break root
-                }
-            }
-        }
-
-        if !expectingSomething {
-            close(last: last ?? self)
-        }
-
-    }
-
-    private func close(last: Any) {
-        (expectations["All"] as? [Expect<Any>])?.forEach {
-            _ = $0.handler(last)
-        }
-
-        piped.removeAll()
-        expectations.removeAll()
-
-        Pipe.all = Pipe.all.filter {
-            $1 !== self
-        }
-    }
-
+    //Сlean all сaptured resources
+    lazy var cleaners = [ ()->() ]()
 
 //    #if TESTING
     
         init() {
-            print("|💪🏽 #init\n\(self)")
+            print("|💪🏽 #init\n\(self) ask \(asking)")
         }
 
 
@@ -117,7 +83,32 @@ public final class Pipe {
         }
     
 }
+ 
 
+//internal static subscript<T>(piped: T) -> Pipe? {
+//    get {
+//        return all[address(for: piped)]
+//    }
+//    set {
+//        if let pipe = newValue {
+//            all[address(for: piped)] = pipe
+//        }
+//    }
+//}
+//
+//static func address<T: AnyObject>(for model: T) -> String {
+//    "\(Unmanaged.passUnretained(model).toOpaque())"
+//}
+//
+//static func address<T>(for model: T) -> String {
+//    var address: String?
+//    var mutable = model
+//    withUnsafePointer(to: &mutable) { pointer in
+//        address = String(format: "%p", pointer)
+//    }
+//
+//    return address!
+//}
 
 //Get
 extension Pipe {
@@ -128,14 +119,27 @@ extension Pipe {
     ///   - create: Construction block
     /// - Returns: Instance of T
     public func get<T>(for key: String? = nil, or create: @autoclosure ()->(T)) -> T {
-        get(for: key) ?? put(create(), key: key)
+        get(for: key) ?? {
+            let model = create()
+            store(model, key: key)
+            return model
+        }()
     }
 
     /// Get piped T for key
-    /// - Parameter key: Key to store
-    /// - Returns: Instance of T
     public func get<T>(for key: String? = nil) -> T? {
-        piped[key ?? T.self|] as? T
+        scope[key ?? T.self|] as? T
+    }
+
+    /// Exist in
+    public
+    func exist<T>(type: T) -> Bool {
+        scope[T.self|] != nil
+    }
+
+    public
+    func exist(_ key: String) -> Bool {
+        scope[key] != nil
     }
 
 }
@@ -148,34 +152,36 @@ extension Pipe {
 
         let key = store(object, key: key)
 
+//        print("#put \(object)")
+
         //Find expectations for object
-        guard let expects = expectations[key] else {
+        guard let expectations = asking[key] as? [Ask<T>] else {
             return object
         }
 
         //Make events happens
-        var inner = true
-        expectations[key] = expects.filter {
-            if inner && !$0.isInner {
-                inner = false
+        var onlyInner = true
+        asking[key] = expectations.filter {
+            if onlyInner && !$0.isInner {
+                onlyInner = false
             }
 
-            return $0.handle(object)
+            return $0.handler(object)
         }
 
         //Handle not inner expectations
-        guard !inner else {
+        guard !onlyInner else {
             return object
         }
 
-        //Handle Any expectations
-        if expects.isEmpty == false {
-            (expectations[Any.self|] as? [Expect<Any>])?.forEach {
+        //Handle .any
+        if expectations.isEmpty == false {
+            (asking[Any.self|] as? [Ask<Any>])?.forEach {
                 _ = $0.handler(object)
             }
         }
 
-        closeIfNeed(last: object)
+        closeIfDone(last: object)
 
         return object
     }
@@ -194,26 +200,20 @@ extension Pipe {
 
         let result = key ?? T.self|
         Pipe[object] = self
-        piped[result] = object
+        scope[result] = object
 
         return result
     }
 
-    public static func |(pipe: Pipe, array: Array<Any>) -> Pipe {
-        pipe.store(array)
-    }
-
     /// Store silently
     /// Without expectations check
-    /// - Parameter array: objects to store
-    /// - Returns: pipe
     @discardableResult
-    public func store(_ array: Array<Any>) -> Pipe {
+    public func store(array: Array<Any>) -> Pipe {
         array.forEach { object in
             let key = type(of: object)|
 
             Pipe[object] = self
-            piped[key] = object
+            scope[key] = object
         }
 
         return self
@@ -221,22 +221,158 @@ extension Pipe {
 
 }
 
-
-//Expect
+//Ask
 extension Pipe {
 
-    public func start<E>(expecting expectation: Expect<E>,
-                  key: String = E.self|) -> Bool {
+    //Store expectation
+    public func ask<T>(for ask: Ask<T>,
+                       checkScope: Bool = false) -> Bool {
 
-        let stored = expectations[key]
+        let key = ask.key ?? T.self|
+
+        let stored = asking[key]
         let isFirst = stored == nil
-        expectations[key] = (stored ?? []) + [expectation]
+        asking[key] = (stored ?? []) + [ask]
+
+
+        //Call handler if object exist
+        if checkScope, let object: T = get() {
+
+            let thread = Thread.current
+            let queue = thread.isMainThread ? .main : thread.qualityOfService|
+
+            queue.async {
+
+                //Should remove?
+                //Optimize
+                if ask.handler(object) == false {
+                    self.asking[key] = (self.asking[key] as? [Ask<T>])?.filter {
+                        $0 !== ask
+                    }
+                }
+
+                //Optimize
+                self.closeIfDone(last: object)
+
+            }
+
+        }
 
         return isFirst
     }
 
 }
 
+public postfix func | (quality: QualityOfService) -> DispatchQueue {
+    DispatchQueue.global(qos: quality|)
+}
+
+public postfix func | (piped: QualityOfService) -> DispatchQoS.QoSClass {
+
+    switch piped {
+        case .userInteractive:
+            return .userInteractive
+
+        case .userInitiated:
+            return .userInitiated
+
+        case .utility:
+            return .utility
+
+        case .background:
+            return .background
+
+        case .default:
+            return .default
+
+        @unknown default:
+            fatalError()
+    }
+
+}
+
+
+
+//Clean
+extension Pipe {
+
+    public func addCleaner(_ cleaner: @escaping ()->()) {
+        cleaners.append(cleaner)
+    }
+
+}
+
+//Close
+extension Pipe {
+
+    internal func closeIfDone(last: Any? = nil) {
+        //TODO: ConcurrenY ?
+
+        //Try to close only if something expected before
+        guard !asking.isEmpty else {
+            return
+        }
+
+        //Close Pipe if only inner asks is live
+        var expectingSomething = false
+
+        root: for (_, list) in asking {
+
+            for ask in list {
+
+                //Find first NOT inner
+                if ask.isInner == false {
+
+                    expectingSomething = true
+                    break root
+
+                }
+
+            }
+
+        }
+
+        //Close Pipe if only inner asks is live
+        if !expectingSomething {
+            close(last: last ?? self)
+        }
+
+    }
+
+    public func close() {
+        close(last: self)
+    }
+
+    private func close(last: Any) {
+
+        //Notify .all
+        (asking["All"] as? [Ask<Any>])?.forEach {
+            _ = $0.handler(last)
+        }
+
+        //Release all objects
+        scope.removeAll()
+        asking.removeAll()
+
+        cleaners.forEach {
+            $0()
+        }
+
+        cleaners.removeAll()
+
+        //Release Pipe
+        Pipe.all = Pipe.all.filter {
+            let store = $0.value !== self
+
+            return store
+        }
+
+        print("")
+    }
+
+}
+
+//Init with scope
 extension Pipe: ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
 
     public typealias ArrayLiteralElement = Any
@@ -244,11 +380,11 @@ extension Pipe: ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
     public typealias Key = String
     public typealias Value = Any
 
-    convenience init<P>(object: P) {
+    convenience init<T>(object: T) {
         self.init()
 
         Pipe[object] = self
-        piped[P.self|] = object
+        scope[T.self|] = object
     }
 
     public convenience init(arrayLiteral elements: Any...) {
@@ -266,7 +402,7 @@ extension Pipe: ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
 
         elements.forEach { (key, object) in
             Pipe[object] = self
-            piped[key] = object
+            scope[key] = object
         }
     }
 
@@ -275,25 +411,29 @@ extension Pipe: ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
 
         dictionary.forEach { (key, object) in
             Pipe[object] = self
-            piped[key] = object
+            scope[key] = object
         }
     }
 
-    public static func attach<T>(to object: T) -> Pipe {
+    public static func attach<S>(to scope: S? = nil) -> Pipe {
 
-        if let pipable = object as? Pipable {
+        guard let scope else {
+            return Pipe()
+        }
+
+        if let pipable = scope as? Pipable {
             return pipable.pipe
         }
 
-        if let array = object as? [Any] {
+        if let array = scope as? [Any] {
             return Pipe(array: array)
         }
 
-        if let dictionary = object as? [String: Any] {
+        if let dictionary = scope as? [String: Any] {
             return Pipe(dictionary: dictionary)
         }
 
-        return Pipe(object: object)
+        return Pipe(object: scope)
     }
 
 }
@@ -313,16 +453,19 @@ extension Pipe: Pipable {
 extension Pipe: CustomStringConvertible, CustomDebugStringConvertible {
 
     public var description: String {
-        "<Pipe \(address)>"
+        "<Pipe \(String(format: "%p", address))>"
     }
 
     
     public var debugDescription: String {
             """
+
             \(description)
-            expectations:
-            \(expectations.keys)
+
+            asking:
+            \(asking.keys)
             >
+
             """
     }
     

@@ -5,7 +5,7 @@
 //  Created by Alex Kozin on 20.10.2022.
 //
 
-import ARKit.ARAnchor
+import ARKit
 
 extension ARAnchor: Pipable {
 
@@ -18,12 +18,12 @@ extension ARAnchor: Pipable {
 }
 
 @available(iOS 13.0, *)
-extension Array: Expectable where Element == ARAnchor {
+extension Array: Asking where Element == ARAnchor {
 
 }
 
 @available(iOS 13.0, *)
-extension Array: ExpectableLabeled, ExpectableWithout where Element == ARAnchor {
+extension Array: As, ExpectableWithout where Element == ARAnchor {
 
     public static func start<P, E>(expectating expectation: Expect<E>, with piped: P, on pipe: Pipe) {
 
@@ -50,7 +50,7 @@ public extension Expect where T == Array<ARAnchor> {
         Expect.every(#function, handler) as! Self
     }
 
-    static func update(_ handler: ( (T)->() )? = nil) -> Self {
+    static func didUpdate(_ handler: ( (T)->() )? = nil) -> Self {
         Expect.every(#function, handler) as! Self
     }
 
@@ -88,93 +88,3 @@ import ARKit.ARAppClipCodeAnchor
 //
 //}
 
-
-
-import ARKit.ARSession
-import RealityKit
-
-@available(iOS 13.0, *)
-extension ARSession: Constructable {
-
-    public static func construct<P>(with piped: P, on pipe: Pipe) -> Self {
-        //TODO: Create ARView if no?
-        let arView = (piped as? ARView) ?? pipe.get()
-
-        let session: Self = arView.session as! Self
-        session.delegate = pipe.put(Delegate())
-
-        if let configuration = (piped as? ARConfiguration) ?? pipe.get() {
-            arView.automaticallyConfigureSession = false
-            session.run(configuration)
-        }
-
-
-        return session
-    }
-
-}
-
-@available(iOS 13.0, *)
-extension ARSession {
-
-    class Delegate: NSObject, ARSessionDelegate, Pipable {
-
-        func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
-
-            guard let pipe = isPiped else {
-                return
-            }
-
-            let key = Expect<[ARAnchor]>.add().key
-
-            pipe.put(anchors, key: key)
-
-            //Waiting for some ARAnchor
-            if pipe.expectations[ARAnchor.self|] != nil {
-
-                anchors.forEach {
-                    let typed = type(of: $0)| + key
-                    isPiped?.put($0, key: typed)
-                }
-
-            }
-
-        }
-
-        func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
-
-            guard let pipe = isPiped else {
-                return
-            }
-
-            pipe.put(anchors, key: Expect<[ARAnchor]>.update().key)
-
-            //Waiting for some ARAnchor
-            if pipe.expectations[ARAnchor.self|] != nil {
-
-                anchors.forEach {
-                    let key = type(of: $0)| + ARAnchor.With.update|
-                    isPiped?.put($0, key: key)
-                }
-
-            }
-
-        }
-
-        func session(_ session: ARSession, didFailWithError error: Error) {
-            isPiped?.put(error)
-        }
-
-    }
-
-}
-
-@available(iOS 13.0, *)
-extension ARView: Constructable {
-
-    public static func construct<P>(with piped: P, on pipe: Pipe) -> Self {
-        Self()
-    }
-
-
-}

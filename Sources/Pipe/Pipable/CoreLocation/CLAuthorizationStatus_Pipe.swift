@@ -23,10 +23,7 @@
 
 import CoreLocation.CLLocation
 
-/**Pipe.Expectable
-
- prefix | (handler: (CLAuthorizationStatus)->() )
- infix | (request: CLAuthorizationStatus,  handler: (CLAuthorizationStatus)->() )
+/**
 
  #Usage
  ```
@@ -41,22 +38,23 @@ import CoreLocation.CLLocation
  ```
 
  */
-extension CLAuthorizationStatus: ExpectableWithout {
+extension CLAuthorizationStatus: AskingWithout, Pipable {
 
-    public static func start<P, E>(expectating expectation: Expect<E>, with piped: P, on pipe: Pipe) {
+    public static func ask<T>(_ ask: Ask<T>, from pipe: Pipe) where T : Asking {
 
-        guard pipe.start(expecting: expectation) else {
+        guard pipe.ask(for: ask) else {
             return
         }
 
-        let source = piped as? CLLocationManager ?? pipe.get()
+        let source: CLLocationManager       = pipe.get()
+        let asking: CLAuthorizationStatus?  = pipe.get()
 
-        switch piped as? CLAuthorizationStatus {
+        switch asking {
 
-        #if !APPCLIP
-            case .authorizedAlways:
-                source.requestAlwaysAuthorization()
-        #endif
+//        #if !APPCLIP
+//            case .authorizedAlways:
+//                source.requestAlwaysAuthorization()
+//        #endif
 
             case .none, .authorizedWhenInUse:
                 source.requestWhenInUseAuthorization()
@@ -69,20 +67,53 @@ extension CLAuthorizationStatus: ExpectableWithout {
 
 }
 
-extension CLAuthorizationStatus: Constructable {
 
-    public static func construct<P>(with piped: P, on pipe: Pipe) -> CLAuthorizationStatus {
 
-        defer {
-            pipe.closeIfNeed()
-        }
+protocol Current {
 
-        if #available(iOS 14.0, macOS 11.0, *) {
-            let manager = piped as? CLLocationManager ?? pipe.get()
-            return manager.authorizationStatus
-        } else {
-            return CLLocationManager.authorizationStatus()
-        }
+}
+
+
+extension CLAuthorizationStatus: Current {
+
+
+//    static func current() -> Self {
+//
+//        if #available(iOS 14.0, macOS 11.0, *) {
+//            let manager = piped as? CLLocationManager ?? pipe.get()
+//            return manager.authorizationStatus
+//        } else {
+//            return CLLocationManager.authorizationStatus()
+//        }
+//    }
+
+//    static func current<T: CLLocationManager>(with: T) -> Self {
+//
+//        if #available(iOS 14.0, macOS 11.0, *) {
+//            let manager = piped as? CLLocationManager ?? pipe.get()
+//            return manager.authorizationStatus
+//        } else {
+//            return CLLocationManager.authorizationStatus()
+//        }
+//    }
+
+}
+
+//
+//
+
+public
+postfix func | (manager: CLLocationManager? = nil) -> CLAuthorizationStatus {
+
+    if #available(iOS 14.0, macOS 11.0, *) {
+        let manager = manager ?? Pipe().get()
+        return manager.authorizationStatus
+    } else {
+        return CLLocationManager.authorizationStatus()
     }
 
+}
+public
+postfix func | (type: CLAuthorizationStatus.Type) -> CLAuthorizationStatus {
+    nil|
 }

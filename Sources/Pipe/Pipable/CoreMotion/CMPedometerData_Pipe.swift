@@ -23,9 +23,7 @@
 
 import CoreMotion.CMPedometer
 
-/**Pipe.Expectable
-
- prefix | (handler: (CMPedometerData)->() )
+/**
 
  #Usage
  ```
@@ -35,16 +33,16 @@ import CoreMotion.CMPedometer
  ```
  
  */
-extension CMPedometerData: ExpectableWithout, Pipable {
+extension CMPedometerData: AskingWithout, Pipable {
 
-    public static func start<P, E>(expectating expectation: Expect<E>, with piped: P, on pipe: Pipe) {
+    public static func ask<T>(_ ask: Ask<T>, from pipe: Pipe) where T : Asking {
 
-        guard pipe.start(expecting: expectation) else {
+        guard pipe.ask(for: ask) else {
             return
         }
 
-        let source = piped as? CMPedometer ?? pipe.get()
-        let date = piped as? Date ?? pipe.get() ?? Date()
+        let source: CMPedometer = pipe.get()
+        let date: Date          = pipe.get() ?? Date()
 
         source.startUpdates(from: date) { (data, error) in
             if let error = error {
@@ -55,7 +53,7 @@ extension CMPedometerData: ExpectableWithout, Pipable {
             pipe.put(data!)
         }
 
-        expectation.cleaner = {
+        ask.cleaner = {
             source.stopUpdates()
         }
 

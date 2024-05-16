@@ -26,14 +26,10 @@ import UIKit.UIAlertController
 
 extension UIAlertController: Constructable {
 
-    public static func construct<P>(with piped: P, on pipe: Pipe) -> Self {
-
-        let style = piped as? UIAlertController.Style ?? pipe.get() ?? .alert
-        let title = piped as? String ?? pipe.get()
-
-        return Self(title: title,
-                    message: pipe.get(for: "UIAlertControllerMessage"),
-                    preferredStyle: style)
+    public static func construct(in pipe: Pipe) -> Self {
+        Self(title:          pipe.get()!,
+             message:        pipe.get(for: "Message"),
+             preferredStyle: pipe.get() ?? .alert)
     }
 
     @discardableResult
@@ -73,6 +69,19 @@ extension UIAlertController: Constructable {
         return controller
     }
     
+}
+
+public
+postfix func | (title: String) -> UIAlertController {
+    UIAlertController(title: title,
+                      message: nil,
+                      preferredStyle: .alert) |
+    ("ok", .destructive)
+}
+
+public
+postfix func | (error: Error) -> UIAlertController {
+    error.localizedDescription|
 }
 
 #endif

@@ -23,30 +23,13 @@
 
 import Foundation
 
-/** Pipable
- URL
-
- public postfix func |(piped: String) -> URL
- public postfix func |(piped: String?) -> URL
- public postfix func |(piped: String?) -> URL?
-
- public postfix func |(piped: URL) -> String
- public postfix func |(piped: URL?) -> String?
-
- infix | (url: URL, reply: ([String: Any])->() ) -> Pipe
- infix | (url: URL, reply: ([Any])->() ) -> Pipe
-
- infix | (url: URL, reply: (Data)->() ) -> Pipe
-
-
- */
-
+//let url: URL = string|
 public postfix func |(piped: String) -> URL {
-    URL(string: piped)!
+    (piped|)!
 }
 
 public postfix func |(piped: String?) -> URL {
-    URL(string: piped!)!
+    (piped!)|
 }
 
 public postfix func |(piped: String?) -> URL? {
@@ -54,9 +37,14 @@ public postfix func |(piped: String?) -> URL? {
         return nil
     }
 
-    return URL(string: piped)
+    return piped|
 }
 
+public postfix func |(piped: String) -> URL? {
+    URL(string: piped)
+}
+
+//let string: String = url|
 public postfix func |(piped: URL) -> String {
     piped.absoluteString
 }

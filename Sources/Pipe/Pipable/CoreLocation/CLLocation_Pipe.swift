@@ -23,56 +23,83 @@
 
 import CoreLocation.CLLocation
 
-/**Pipe.Expectable
 
- prefix | (handler: (CLLocation)->() )
+prefix func |(handler: @escaping (CLLocation)->()) -> Pipe {
+    Pipe() | .one(handler: handler)
+}
 
- #Usage
- ```
- |{ (location: CLLocation) in
 
- }
- ```
+prefix func |(ask: Ask<CLLocation>) -> Pipe {
+    Pipe() | ask
+}
 
- */
-extension CLLocation: ExpectableWithout, Pipable {
+@discardableResult
+func |<T> (scope: T, ask: Ask<CLLocation>) -> Pipe {
 
-    public static func start<P, E>(expectating expectation: Expect<E>, with piped: P, on pipe: Pipe) {
+    let pipe = Pipe.attach(to: scope)
 
-        guard pipe.start(expecting: expectation) else {
-            return
-        }
-
-        let source = piped as? CLLocationManager ?? pipe.get()
-
-        let handler = { (status: CLAuthorizationStatus) -> Bool in
-            guard status != .notDetermined else {
-                return true
-            }
-
-            switch (expectation.condition) {
-                case .one:
-                    source.requestLocation()
-
-                default:
-                    source.startUpdatingLocation()
-            }
-
-            return false
-        }
-
-        //Expect specific status
-        if let status = piped as? CLAuthorizationStatus ?? pipe.get() {
-            status | .while(handler).inner()
-        } else {
-            //Or start expecting from specific manager
-            source | .while(handler).inner()
-        }
-
-        expectation.cleaner = {
-            source.stopUpdatingLocation()
-        }
-
+    guard pipe.ask(for: ask) else {
+        return pipe
     }
 
+    let source: CLLocationManager = pipe.get()
+
+    pipe | .while { (status: CLAuthorizationStatus) -> Bool in
+
+        guard status != .notDetermined else {
+            return true
+        }
+
+        switch (ask.condition) {
+            case .one:
+                source.requestLocation()
+
+            default:
+                source.startUpdatingLocation()
+        }
+
+        return false
+    }.inner()
+
+    ask.cleaner = {
+        source.stopUpdatingLocation()
+    }
+
+    return pipe
 }
+
+
+//extension CLLocation: AskingWithout, Pipable {
+//
+//    public static func ask<T>(_ ask: Ask<T>, from pipe: Pipe) where T : Asking {
+//
+//        guard pipe.ask(for: ask) else {
+//            return
+//        }
+//
+//        let source: CLLocationManager = pipe.get()
+//
+//        pipe | .while { (status: CLAuthorizationStatus) -> Bool in
+//
+//            guard status != .notDetermined else {
+//                return true
+//            }
+//
+//            switch (ask.condition) {
+//                case .one:
+//                    source.requestLocation()
+//
+//                default:
+//                    source.startUpdatingLocation()
+//            }
+//
+//            return false
+//        }.inner()
+//
+//        ask.cleaner = {
+//            source.stopUpdatingLocation()
+//        }
+//
+//    }
+//
+//}

@@ -20,22 +20,40 @@ func | (postItem: CloudKit.Model,
     
     pipe.store([postItem.updatedRecord()])
 
+    var error: Error? = nil
+
     let o: CKModifyRecordsOperation = pipe.get()
     o.modifyRecordsResultBlock = { result in
-        
+
         switch result {
-            
+
             case .success():
-                pipe.put(postItem)
-            
+                //Avoid calling completion if there are partial errors
+                if error == nil {
+                    pipe.put(postItem)
+                }
+
             case .failure(let e):
                 pipe.put(e)
-            
+
         }
-        
+
     }
-    
-    
+
+    o.perRecordSaveBlock = { _, result in
+
+        switch result {
+
+            case .failure(let e):
+                error = e
+                pipe.put(e)
+
+            case .success(_):
+                break
+        }
+
+    }
+
     let database: CKDatabase = pipe.get()
     database.add(o)
 

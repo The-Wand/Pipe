@@ -56,6 +56,12 @@ public postfix func |(piped: (row: Int, section: Int)) -> IndexPath {
     IndexPath(row: piped.row, section: piped.section)
 }
 
+public 
+postfix
+func |(row: Int) -> IndexPath {
+    IndexPath(row: row, section: 0)
+}
+
 //UIEdgeInsets
 public postfix func |(piped: (top: CGFloat, left: CGFloat, bottom: CGFloat, right: CGFloat)) -> UIEdgeInsets {
     UIEdgeInsets(top: piped.top,

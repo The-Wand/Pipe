@@ -16,7 +16,6 @@ extension CKModifyRecordsOperation: Constructable {
         let records: [CKRecord] = pipe.get()!
 
         let operation = CKModifyRecordsOperation(recordsToSave: records)
-
         operation.configuration = pipe.get()
 
         return operation as! Self   

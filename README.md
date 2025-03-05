@@ -126,3 +126,9 @@ Current implementation is not final solution, but main idea
 
 You ideas, comments, contribution are welcome  
 Main course is to add some new Pipable extensions for other types
+
+The Pipe may collect usage data   
+You must attribute the author   
+[Alex Kozin](mailto:al.kozin@gmail.com)   
+[El Machine 🤖](https://el-machine.com)  
+Apps since 2008

@@ -208,6 +208,7 @@
 		61A6F9E128EC06A30037CDBD /* Data_Convertable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Data_Convertable.swift; sourceTree = "<group>"; };
 		61A6F9E528EC06E20037CDBD /* String.Encoding_Pipe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.Encoding_Pipe.swift; sourceTree = "<group>"; };
 		61A6F9E628EC06E20037CDBD /* String.IndexDistance_Pipe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.IndexDistance_Pipe.swift; sourceTree = "<group>"; };
+		61AA24C12D7878B4005550F4 /* NOTICE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = NOTICE.txt; sourceTree = "<group>"; };
 		61BD12C029B6105000702724 /* Foundation_Pipe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Foundation_Pipe.swift; sourceTree = "<group>"; };
 		61BD12C229B6106900702724 /* Bundle_Pipe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bundle_Pipe.swift; sourceTree = "<group>"; };
 		61DC807B29541F0200B57A0C /* Date_Pipe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Date_Pipe.swift; sourceTree = "<group>"; };
@@ -288,7 +289,6 @@
 		OBJ_30 /* CMPedometerData_Pipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CMPedometerData_Pipe.swift; sourceTree = "<group>"; };
 		OBJ_31 /* CMPedometerEvent_Pipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CMPedometerEvent_Pipe.swift; sourceTree = "<group>"; };
 		OBJ_32 /* CMPedometer_Pipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CMPedometer_Pipe.swift; sourceTree = "<group>"; };
-		OBJ_34 /* CoreNFC_Convertable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreNFC_Convertable.swift; sourceTree = "<group>"; };
 		OBJ_35 /* NFCNDEFReaderSession_Pipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCNDEFReaderSession_Pipe.swift; sourceTree = "<group>"; };
 		OBJ_36 /* NFCNDEFTag_Pipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCNDEFTag_Pipe.swift; sourceTree = "<group>"; };
 		OBJ_39 /* Codable_Pipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Codable_Pipe.swift; sourceTree = "<group>"; };
@@ -772,7 +772,6 @@
 		OBJ_33 /* CoreNFC */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_34 /* CoreNFC_Convertable.swift */,
 				OBJ_35 /* NFCNDEFReaderSession_Pipe.swift */,
 				OBJ_36 /* NFCNDEFTag_Pipe.swift */,
 			);
@@ -828,6 +827,7 @@
 				6162625228BC8E2B00D63EA5 /* macOS */,
 				OBJ_138 /* Products */,
 				OBJ_141 /* LICENSE */,
+				61AA24C12D7878B4005550F4 /* NOTICE.txt */,
 				OBJ_142 /* README.md */,
 				OBJ_143 /* logo.png */,
 			);
@@ -1365,7 +1365,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1450,7 +1450,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_PREVIEWS = YES;
@@ -1536,7 +1536,7 @@
 				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1617,7 +1617,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1654,7 +1654,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "";
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				DRIVERKIT_DEPLOYMENT_TARGET = 19.0;
@@ -1690,7 +1690,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "";
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				DRIVERKIT_DEPLOYMENT_TARGET = 19.0;
@@ -1763,7 +1763,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				DRIVERKIT_DEPLOYMENT_TARGET = 19.0;
@@ -1803,7 +1803,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = LZSP4Z4B6A;
 				DRIVERKIT_DEPLOYMENT_TARGET = 19.0;
